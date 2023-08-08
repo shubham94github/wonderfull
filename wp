@@ -1,0 +1,108 @@
+server {
+
+        root /var/www/html/mysite.com;
+        index index.php index.html;
+ 
+       server_name wonderfull.in www.wonderfull.in;
+       client_max_body_size 128M;         
+
+#	    access_log /var/log/nginx/SUBDOMAIN.access.log;
+#    	    error_log /var/log/nginx/SUBDOMAIN.error.log;
+
+         #   location / {
+#                         try_files $uri $uri/ =404;
+           #               try_files $uri $uri/ /index.php?$args;
+          # }
+
+       ## Deal with sitemap wordpress plugin urls ##
+    rewrite ^/sitemap(-+([a-zA-Z0-9_-]+))?\.xml$ "/index.php?xml_sitemap=params=$2" last;
+    rewrite ^/sitemap(-+([a-zA-Z0-9_-]+))?\.xml\.gz$ "/index.php?xml_sitemap=params=$2;zip=true" last;
+    rewrite ^/sitemap(-+([a-zA-Z0-9_-]+))?\.html$ "/index.php?xml_sitemap=params=$2;html=true" last;
+    rewrite ^/sitemap(-+([a-zA-Z0-9_-]+))?\.html.gz$ "/index.php?xml_sitemap=params=$2;html=true;zip=true" last;
+
+
+            location ~ \.php$ {
+                         include snippets/fastcgi-php.conf;
+                         fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+            }
+            
+            location ~ /\.ht {
+                         deny all;
+            }
+
+            location = /favicon.ico {
+                         log_not_found off;
+                         access_log off;
+            }
+
+            location = /robots.txt {
+                         allow all;
+                         log_not_found off;
+                         access_log off;
+           }
+       
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+                         expires max;
+                         log_not_found off;
+           }
+
+#seotool
+            location / {
+            if (!-e $request_filename) {
+               rewrite  ^/admin/(.*)$  /admin/index.php?route=$1  last;
+               rewrite  ^/(.*)$  /index.php?route=$1  last;
+              break;
+             }
+          }
+
+            location ~ \.(inc|sql|bak|dat|ini|tdata|sdata|addonpk)$ { 
+                deny all; 
+          }
+
+location = /admin/db-backups {
+    deny all;
+}
+
+location = /admin/addons {
+    deny all;
+}
+
+location = /uploads/temp {
+    deny all;
+}
+
+
+#pemalink
+           location /faq/ {
+        try_files $uri $uri/ /faq/index.php?$args; 
+    }
+
+
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/www.wonderfull.in/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/www.wonderfull.in/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+}
+server {
+    if ($host = wonderfull.in) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    if ($host = www.wonderfull.in) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+       listen 80;
+       server_name wonderfull.in www.wonderfull.in;
+    return 404; # managed by Certbot
+
+
+
+
+}
